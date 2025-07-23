@@ -9,12 +9,14 @@ import com.aluracursos.literalura.services.ConvierteDatos;
 import com.aluracursos.literalura.services.ConsumoAPI;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Principal {
     private ConsumoAPI consumoAPI = new ConsumoAPI();
     private Scanner scanner = new Scanner(System.in);
-    private String urlBase = "TURLA_DE_LA_API"; // Reemplaza con la URL de la API que deseas consumir
+    private String urlBase = "TU_URL_DE_LA_API"; // Reemplaza con la URL de la API que deseas consumir
     private ConvierteDatos conversor = new ConvierteDatos();
     private LibroRepository libroRepository;
     private AutorRepository autorRepository;
@@ -42,6 +44,7 @@ public class Principal {
                     3 - Consultar autores
                     4 - Consultar autores de un año especifico
                     5 - Consultar libros por lenguaje
+                    6 - Mostrar estadísticas de libros por idioma
 
                     0 - Salir
                     """;
@@ -70,6 +73,9 @@ public class Principal {
                     break;
                 case 5:
                     consultarLibrosLenguaje();
+                    break;
+                case 6:
+                    mostrarEstadisticasLibrosPorIdioma();
                     break;
                 case 0:
                     System.out.println("Hasta pronto, gracias por usar LiterAlura");
@@ -211,4 +217,43 @@ public class Principal {
             System.out.println("Ingresa un valor valido");
         }
     }
+
+    private void mostrarEstadisticasLibrosPorIdioma() {
+        // Cargar todos los libros desde la base de datos si no están ya cargados
+        if (libros == null || libros.isEmpty()) {
+            libros = libroRepository.findAll();
+        }
+
+        if (libros.isEmpty()) {
+            System.out.println("No hay libros en la base de datos para generar estadísticas.");
+            return;
+        }
+
+        // Usar Streams para agrupar y contar libros por idioma
+        Map<String, Long> estadisticasPorIdioma = libros.stream()
+                .collect(Collectors.groupingBy(Libro::getLenguaje, Collectors.counting()));
+
+        System.out.println("\n--- Estadísticas de Libros por Idioma ---");
+        estadisticasPorIdioma.forEach((idioma, cantidad) -> {
+            String nombreIdioma = obtenerNombreIdioma(idioma); // Método auxiliar para mostrar el nombre completo del
+                                                               // idioma
+            System.out.printf("Idioma: %s (%s) - Cantidad: %d%n", nombreIdioma, idioma, cantidad);
+        });
+        System.out.println("-----------------------------------------\n");
+    }
+
+    // Método auxiliar para obtener el nombre completo del idioma (opcional)
+    private String obtenerNombreIdioma(String codigoIdioma) {
+        return switch (codigoIdioma) {
+            case "es" -> "Español";
+            case "en" -> "Inglés";
+            case "fr" -> "Francés";
+            case "pt" -> "Portugués";
+            case "de" -> "Alemán";
+            case "it" -> "Italiano";
+            // Agrega más casos según los idiomas que manejes en tu API
+            default -> "Desconocido";
+        };
+    }
+
 }
